@@ -216,7 +216,7 @@ A delivery partner with a ₹8,000 phone with 8GB storage won't download another
 ## 🔗 Links
 
 - **Repository:** *(https://github.com/geethikagattu/DEVTrails-2026/edit/main/README.md)*
-- **Demo Video (Phase 1):** https://drive.google.com/file/d/1jSPpjgpoojAbdYRWnGzWLNh6PRPCVRZV/view?usp=sharing
+- **Demo Video (Phase 1):** https://drive.google.com/file/d/1llNzdJ-xETvSFLIZ_f2jC9FYSMWWeZvq/view?usp=sharing
 - **Live Demo:** [Link to be added — Phase 2 onwards]
 
 ---
