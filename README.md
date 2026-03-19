@@ -1,4 +1,4 @@
-# ⚡ ShieldRun — Income Protection for Every Kilometer
+#  ShieldRun — Income Protection for Every Kilometer
 
 > **Guidewire DEVTrails 2026 | Team Submission | Phase 1**
 > AI-powered parametric insurance for Zomato & Swiggy delivery partners in India.
@@ -138,7 +138,7 @@ No manual claims. These thresholds fire automatically:
 - Built using LSTM on historical weather + claim correlation data
 
 ---
-# 🛡️ Adversarial Defense & Anti-Spoofing Strategy
+#  Adversarial Defense & Anti-Spoofing Strategy
 
 > **Emergency Architecture Update — Phase 1 Final 24 Hours**
 > In response to a confirmed threat: a coordinated syndicate of 500+ delivery workers
@@ -233,7 +233,7 @@ denied payouts during the exact moment they need help most. ShieldRun's philosop
 
 **Tier 1 — Auto-Approved (≥5/7 signals pass)**
 - Payout hits UPI in <60 seconds.
-- No friction. No notification beyond "Payout Sent ✅"
+- No friction. No notification beyond "Payout Sent "
 
 **Tier 2 — Soft Flag (3–4/7 signals pass)**
 - Worker receives an immediate partial advance payout (40% of claim value)
