@@ -206,9 +206,9 @@ A delivery partner with a ₹8,000 phone with 8GB storage won't download another
 | Member | Role |
 |---|---|
 | [Geethika Gattu] | Team Lead + Backend Engineer |
-| [Ambati ] | AI/ML Engineer |
-| [Saniya Hasses] | Frontend Developer (Worker PWA) |
-| [Chandini] | Frontend Developer (Admin Dashboard) |
+| [Akash Ambati] | AI/ML Engineer |
+| [Saniya Hassen] | Frontend Developer (Worker PWA) |
+| [Chandini Konda] | Frontend Developer (Admin Dashboard) |
 | [Kusuma Nandarapu] | Full Stack + DevOps + Submissions |
 
 ---
