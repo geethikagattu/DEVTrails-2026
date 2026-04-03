@@ -139,3 +139,24 @@ class Claim(Base):
 
     def __repr__(self):
         return f"<Claim {self.trigger_type} status={self.status} payout=₹{self.payout_amount_paise/100}>"
+
+# ─── OTP ───────────────────────────────────────────────────────────────────────
+
+class OneTimePassword(Base):
+    """
+    Temporarily stores an OTP generated for a phone number for login/registration verification.
+    """
+    __tablename__ = "one_time_passwords"
+
+    id         = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    phone      = Column(String(15), nullable=False, index=True)
+    otp_code   = Column(String(6), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def is_valid(self):
+        return datetime.utcnow() <= self.expires_at
+
+    def __repr__(self):
+        return f"<OTP phone={self.phone} expire={self.expires_at}>"
+

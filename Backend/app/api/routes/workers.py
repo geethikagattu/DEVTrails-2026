@@ -4,11 +4,37 @@ from uuid import UUID
 from datetime import datetime, timedelta
 
 from app.core.database import get_db
-from app.models.models import Worker, Policy, Claim, ClaimStatusEnum
-from app.schemas.schemas import WorkerCreate, WorkerResponse, WorkerDashboard
+import random
+from app.models.models import Worker, Policy, Claim, ClaimStatusEnum, OneTimePassword
+from app.schemas.schemas import WorkerCreate, WorkerResponse, WorkerDashboard, OtpRequest, WorkerLogin
 from app.services.premium_service import calculate_zone_risk_score
 
 router = APIRouter(prefix="/workers", tags=["👷 Workers"])
+
+
+# ─── OTP Lifecycle ────────────────────────────────────────────────────────────────
+
+@router.post(
+    "/otp/send",
+    status_code=status.HTTP_200_OK,
+    summary="Generate and send OTP for login/register",
+)
+def send_otp(payload: OtpRequest, db: Session = Depends(get_db)):
+    # Generate random 4 digit code
+    code = f"{random.randint(1000, 9999)}"
+    
+    otp_record = OneTimePassword(
+        phone=payload.phone,
+        otp_code=code,
+        expires_at=datetime.utcnow() + timedelta(minutes=5)
+    )
+    db.add(otp_record)
+    db.commit()
+    
+    # In production, we'd fire an SMS API here.
+    # For demo, we explicitly return it so the frontend can display/use it.
+    print(f"DEMO SMS: OTP for {payload.phone} is {code}")
+    return {"message": "OTP sent successfully", "demo_otp": code}
 
 
 # ─── Register ─────────────────────────────────────────────────────────────────
@@ -32,6 +58,15 @@ def register_worker(payload: WorkerCreate, db: Session = Depends(get_db)):
             detail=f"A worker with phone {payload.phone} is already registered.",
         )
 
+    # Verify OTP
+    otp_record = db.query(OneTimePassword).filter(
+        OneTimePassword.phone == payload.phone,
+        OneTimePassword.otp_code == payload.otp_code
+    ).order_by(OneTimePassword.created_at.desc()).first()
+
+    if not otp_record or not otp_record.is_valid():
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+
     risk_score = calculate_zone_risk_score(payload.zone_pincode)
 
     worker = Worker(
@@ -53,17 +88,26 @@ def register_worker(payload: WorkerCreate, db: Session = Depends(get_db)):
 
 # ─── Login / Lookup ───────────────────────────────────────────────────────────
 
-@router.get(
-    "/login/{phone}",
+@router.post(
+    "/login",
     response_model=WorkerResponse,
-    summary="Worker login by phone number",
+    summary="Worker login by phone number and OTP",
 )
-def login_by_phone(phone: str, db: Session = Depends(get_db)):
+def login_by_phone(payload: WorkerLogin, db: Session = Depends(get_db)):
     """
     Saniya uses this for the worker login screen.
-    The frontend sends the phone number, gets back the worker object (incl. ID).
+    The frontend sends the phone number and OTP, gets back the worker object (incl. ID).
     """
-    worker = db.query(Worker).filter(Worker.phone == phone).first()
+    # Verify OTP First
+    otp_record = db.query(OneTimePassword).filter(
+        OneTimePassword.phone == payload.phone,
+        OneTimePassword.otp_code == payload.otp_code
+    ).order_by(OneTimePassword.created_at.desc()).first()
+
+    if not otp_record or not otp_record.is_valid():
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+
+    worker = db.query(Worker).filter(Worker.phone == payload.phone).first()
     if not worker:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

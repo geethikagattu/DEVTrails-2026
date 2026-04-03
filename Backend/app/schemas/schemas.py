@@ -18,7 +18,14 @@ class WorkerCreate(BaseModel):
     city:               str   = Field(..., example="Hyderabad")
     upi_id:             Optional[str] = Field(None, example="raju@ybl")
     avg_daily_earnings: Optional[float] = Field(500.0, example=600.0, description="Estimated daily earnings in ₹")
+    otp_code:           str   = Field(..., example="1234", description="4-digit OTP code sent to phone")
 
+class OtpRequest(BaseModel):
+    phone: str = Field(..., example="9876543210")
+
+class WorkerLogin(BaseModel):
+    phone: str = Field(..., example="9876543210")
+    otp_code: str = Field(..., example="1234")
 
 class WorkerResponse(BaseModel):
     id:                 UUID
