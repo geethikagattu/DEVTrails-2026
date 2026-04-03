@@ -10,6 +10,7 @@ engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
 )
+print("USING DB:", DATABASE_URL)
 # ─── Session ───────────────────────────────────────────────────────────────────
 SessionLocal = sessionmaker(
     autocommit=False,

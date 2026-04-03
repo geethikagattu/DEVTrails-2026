@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ─── Environment ───────────────────────────────────────────────────────────────
-DATABASE_URL    = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/shieldrun")
+DATABASE_URL    = os.getenv("DATABASE_URL", "postgresql://postgres:jgscVhKoOFbdZqbNmEEwOSaWSjxRxmlk@postgres.railway.internal:5432/railway")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
 SECRET_KEY      = os.getenv("SECRET_KEY", "changeme-use-a-real-secret")
 ENVIRONMENT     = os.getenv("ENVIRONMENT", "development")
