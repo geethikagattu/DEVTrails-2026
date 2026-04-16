@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { User, Home, Shield, LogOut } from 'lucide-react';
+import { User, Home, Shield, LogOut, Activity } from 'lucide-react';
 import { useEffect } from 'react';
 
 export default function AppLayout() {
@@ -63,6 +63,10 @@ export default function AppLayout() {
         <button onClick={() => navigate('/profile')} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <User size={24} />
           <span style={{ fontSize: '12px' }}>Profile</span>
+        </button>
+        <button onClick={() => navigate('/admin')} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <Activity size={24} />
+          <span style={{ fontSize: '12px' }}>Admin</span>
         </button>
       </nav>
     </div>

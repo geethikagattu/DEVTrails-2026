@@ -18,7 +18,7 @@ import logging
 from app.core.database import SessionLocal
 from app.core.config import OPENWEATHER_API_KEY, TRIGGERS
 from app.models.models import Worker, Policy, Claim, ClaimStatusEnum
-from app.services.fraud_service import calculate_fraud_score, decide_action, compute_payout
+# from app.services.fraud_service import calculate_fraud_score, decide_action, compute_payout
 
 logger = logging.getLogger(__name__)
 
@@ -116,34 +116,7 @@ def create_and_process_claim(
     Core function: create a claim record, run fraud detection, decide payout.
     Called both by the scheduler AND by the manual demo endpoint.
     """
-    # Run fraud detection
-    fraud_score, signals = calculate_fraud_score(
-        worker=worker,
-        trigger_type=event["type"],
-        trigger_value=event["value"],
-        db=db,
-    )
-    action = decide_action(fraud_score)
-
-    # Calculate payout
-    payout_paise = compute_payout(
-        action=action,
-        coverage_per_day_paise=policy.coverage_per_day_paise,
-        payout_pct=event["payout_pct"],
-    )
-
-    # Map action → status
-    status_map = {
-        "approve": ClaimStatusEnum.approved,
-        "partial": ClaimStatusEnum.partial,
-        "flag":    ClaimStatusEnum.flagged,
-    }
-
-    # Generate mock UPI reference for approved/partial claims
-    upi_ref = None
-    if action in ("approve", "partial"):
-        upi_ref = f"SHLD{uuid_lib.uuid4().hex[:10].upper()}"
-
+    # Phase 3: Initially set to pending. Fraud check task will update this.
     claim = Claim(
         worker_id         = worker.id,
         policy_id         = policy.id,
@@ -151,22 +124,23 @@ def create_and_process_claim(
         trigger_value     = event["value"],
         trigger_threshold = event["threshold"],
         trigger_label     = event.get("label", ""),
-        fraud_score       = fraud_score,
-        fraud_signals     = json.dumps(signals),
-        status            = status_map[action],
-        payout_amount_paise = payout_paise,
-        payout_upi_ref    = upi_ref,
-        processed_at      = datetime.utcnow() if action != "flag" else None,
+        status            = ClaimStatusEnum.pending,
+        payout_amount_paise = int(policy.coverage_per_day_paise * event["payout_pct"]),
+        created_at        = datetime.utcnow(),
     )
 
     db.add(claim)
-
-    # Update policy's running total
-    if payout_paise > 0:
-        policy.total_paid_out_paise = (policy.total_paid_out_paise or 0) + payout_paise
-
     db.commit()
     db.refresh(claim)
+
+    # 🚀 TRIGGER ASYNC FRAUD CHECK (Phase 3 Orchestration)
+    from app.tasks import process_claim_fraud_check
+    process_claim_fraud_check.delay(str(claim.id))
+
+    logger.info(
+        f"[TriggerEngine][Phase3] Pending Claim created → worker={worker.phone} trigger={event['type']} "
+        f"value={event['value']} ID={claim.id}"
+    )
 
     logger.info(
         f"[TriggerEngine] Claim → worker={worker.phone} trigger={event['type']} "

@@ -34,8 +34,10 @@ class WorkerResponse(BaseModel):
     platform:           PlatformEnum
     platform_id:        str
     zone_pincode:       str
+    zone:               Optional[str]
     city:               str
     upi_id:             Optional[str]
+    firebase_uid:       Optional[str]
     zone_risk_score:    int
     avg_daily_earnings: float
     is_active:          bool
@@ -170,3 +172,36 @@ class HealthResponse(BaseModel):
     db_connected: bool
     environment: str
     version:     str
+
+
+# ══════════════════════════════════════════════════════════
+#  PHASE 3 SCHEMAS (Triggers, Signals, Payouts)
+# ══════════════════════════════════════════════════════════
+
+class SignalCreate(BaseModel):
+    claim_id:      UUID
+    gps:           Optional[str] = None
+    accelerometer: Optional[str] = None
+    battery:       Optional[str] = None
+    cell_id:       Optional[str] = None
+    mock_flag:     bool = False
+
+class TriggerResponse(BaseModel):
+    id:        UUID
+    zone:      str
+    type:      str
+    value:     float
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+class PayoutResponse(BaseModel):
+    id:              UUID
+    claim_id:        UUID
+    razorpay_txn_id: Optional[str]
+    status:          str
+    retry_count:     int
+
+    class Config:
+        from_attributes = True

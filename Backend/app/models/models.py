@@ -46,8 +46,10 @@ class Worker(Base):
     platform            = Column(Enum(PlatformEnum), nullable=False)
     platform_id         = Column(String(50), nullable=False)        # their Zomato/Swiggy ID
     zone_pincode        = Column(String(10), nullable=False)
+    zone                = Column(String(50), nullable=True)         # Used for logical grouping / ML inference
     city                = Column(String(50), nullable=False)
     upi_id              = Column(String(100), nullable=True)         # for payouts
+    firebase_uid        = Column(String(128), unique=True, nullable=True, index=True) # Phase 3: Firebase Auth
     zone_risk_score     = Column(Integer, default=50)               # 0–100, AI-computed
     avg_daily_earnings  = Column(Float, default=500.0)              # ₹ per day
     is_active           = Column(Boolean, default=True)
@@ -159,4 +161,67 @@ class OneTimePassword(Base):
 
     def __repr__(self):
         return f"<OTP phone={self.phone} expire={self.expires_at}>"
+
+
+# ─── Trigger (Phase 3) ─────────────────────────────────────────────────────────
+
+class TriggerEnum(str, enum.Enum):
+    weather = "weather"
+    aqi     = "aqi"
+    curfew  = "curfew"
+    outage  = "outage"
+
+class Trigger(Base):
+    """Recorded events from external APIs (Weather, AQI, Manual Mock)."""
+    __tablename__ = "triggers"
+    id          = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    zone        = Column(String(50), nullable=False, index=True)
+    type        = Column(Enum(TriggerEnum), nullable=False)
+    value       = Column(Float, nullable=False)
+    timestamp   = Column(DateTime, default=datetime.utcnow)
+
+
+# ─── Signals (Phase 3 Fraud Detection) ─────────────────────────────────────────
+
+class Signal(Base):
+    """Multi-signal telemetry for each claim, used by the Fraud GNN."""
+    __tablename__ = "signals"
+    id            = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id      = Column(UUID(as_uuid=True), ForeignKey("claims.id"), nullable=False, index=True)
+    gps           = Column(String(100), nullable=True)          # e.g. "lat,lng"
+    accelerometer = Column(String(100), nullable=True)
+    battery       = Column(String(50), nullable=True)
+    cell_id       = Column(String(50), nullable=True)
+    mock_flag     = Column(Boolean, default=False)              # True if spoofed
+    created_at    = Column(DateTime, default=datetime.utcnow)
+
+
+# ─── Fraud Ring (Phase 3 GNN Output) ──────────────────────────────────────────
+
+class FraudRing(Base):
+    """Stores clusters detected by the GNN."""
+    __tablename__ = "fraudrings"
+    cluster_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_ids  = Column(Text, default="[]")                     # JSON list of claim UUIDs
+    ring_score = Column(Float, default=0.0)
+    detected_at= Column(DateTime, default=datetime.utcnow)
+
+
+# ─── Payout (Phase 3) ──────────────────────────────────────────────────────────
+
+class PayoutStatusEnum(str, enum.Enum):
+    pending = "pending"
+    success = "success"
+    failed  = "failed"
+
+class Payout(Base):
+    """Tracks UPI transactions via Razorpay."""
+    __tablename__ = "payouts"
+    id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id        = Column(UUID(as_uuid=True), ForeignKey("claims.id"), nullable=False, index=True)
+    razorpay_txn_id = Column(String(100), nullable=True)
+    status          = Column(Enum(PayoutStatusEnum), default=PayoutStatusEnum.pending)
+    retry_count     = Column(Integer, default=0)
+    created_at      = Column(DateTime, default=datetime.utcnow)
+    updated_at      = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

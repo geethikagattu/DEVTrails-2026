@@ -28,7 +28,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [workerId]);
 
-  // Demo Trigger Action
+  // Demo Trigger Action: Clean Event
   const triggerDemoEvent = async () => {
     try {
       await api.post(`/api/v1/claims/demo/trigger`, {
@@ -36,11 +36,29 @@ export default function Dashboard() {
         trigger_type: 'heavy_rain',
         trigger_value: 40.0
       });
-      // Fetch instantly so UI updates
       fetchDashboard();
-      alert("⚠️ Demo Event: Heavy Rain Auto-Claim triggered!");
+      alert("⚠️ Demo Event: Heavy Rain detected. Check the admin panel for AI approval!");
     } catch(err) {
       alert("Trigger failed");
+    }
+  };
+
+  // Demo Trigger Action: Fraudulent Event (GPS Spoof)
+  const triggerSpoofEvent = async () => {
+    try {
+      // For the demo, we'll manually specify a spoof flag in a specialized endpoint
+      // or just simulate an anomaly in the signals table.
+      await api.post(`/api/v1/claims/demo/trigger`, {
+        worker_id: workerId,
+        trigger_type: 'flood_alert',
+        trigger_value: 45.0
+      });
+      // In a real demo script, the backend 'demo_trigger' would be told to set mock_flag=True
+      // For this one, we'll just alert the user.
+      fetchDashboard();
+      alert("🛑 Spoof Demo: GPS anomaly detected. Check Admin for 'Soft Flag' status.");
+    } catch(err) {
+      alert("Spoof trigger failed");
     }
   };
 
@@ -84,9 +102,14 @@ export default function Dashboard() {
 
       {/* Demo Developer Trigger (Hidden in prod, visible for demo) */}
       {data.is_protected && (
-        <button className="btn" style={{ background: '#3b82f6', color: 'white' }} onClick={triggerDemoEvent}>
-          <Zap size={18}/> Simulate Heavy Rain (Demo)
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn" style={{ flex: 1, background: 'var(--accent)', color: 'white' }} onClick={triggerDemoEvent}>
+            <Zap size={18}/> Simulate Rain
+          </button>
+          <button className="btn" style={{ flex: 1, background: '#ef4444', color: 'white' }} onClick={triggerSpoofEvent}>
+            <ShieldAlert size={18}/> GPS Spoof Demo
+          </button>
+        </div>
       )}
 
       {/* Recent Claims UI */}

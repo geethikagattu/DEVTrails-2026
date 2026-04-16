@@ -12,7 +12,9 @@ from app.models.models import Worker, Policy, Claim, ClaimStatusEnum
 from app.schemas.schemas import (
     ClaimResponse, ManualTriggerRequest,
     AdminStats, AdminClaimAction,
+    TriggerResponse, PayoutResponse
 )
+from app.models.models import Signal, Trigger, FraudRing, Payout
 from app.services.trigger_engine import create_and_process_claim
 
 router = APIRouter(prefix="/claims", tags=["📝 Claims"])
@@ -236,18 +238,85 @@ def demo_trigger(payload: ManualTriggerRequest, db: Session = Depends(get_db)):
     }
 
     claim = create_and_process_claim(db, worker, policy, event)
+
+    # 🔗 PHASE 3: Generate Mock Telemetry Signals for AI analysis
+    # This ensures the Isolation Forest has "features" to look at.
+    mock_signals = Signal(
+        claim_id=claim.id,
+        gps=f"{worker.zone_pincode},mock",
+        accelerometer="vibration_level: 0.12",
+        battery="85%",
+        mock_flag=False # Set this to True in a separate "Spoof Demo" endpoint if needed
+    )
+    db.add(mock_signals)
+    db.commit()
+
     return claim
 
-
-# ─── Get single claim ─────────────────────────────────────────────────────────
 
 @router.get(
-    "/{claim_id}",
-    response_model=ClaimResponse,
-    summary="Get a specific claim by ID",
+    "/admin/stats",
+    summary="[Admin] Get high-level orchestration metrics",
 )
-def get_claim(claim_id: UUID, db: Session = Depends(get_db)):
-    claim = db.query(Claim).filter(Claim.id == claim_id).first()
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found")
-    return claim
+def get_admin_stats(db: Session = Depends(get_db)):
+    from sqlalchemy import func
+    from app.models.models import Worker, Policy, Claim, ClaimStatusEnum
+    
+    total_workers = db.query(Worker).count()
+    active_policies = db.query(Policy).filter(Policy.active == True).count()
+    
+    # Calculate Total Paid Out (in Rupees)
+    total_paise = db.query(func.sum(Claim.payout_amount_paise)).filter(
+        Claim.status == ClaimStatusEnum.approved
+    ).scalar() or 0
+    
+    # Calculate Approval Rate
+    total_claims = db.query(Claim).count()
+    approved_claims = db.query(Claim).filter(Claim.status == ClaimStatusEnum.approved).count()
+    approval_rate = (approved_claims / total_claims * 100) if total_claims > 0 else 0
+    
+    return {
+        "total_workers": total_workers,
+        "active_policies": active_policies,
+        "total_paid_out_rs": round(total_paise / 100, 2),
+        "approval_rate_pct": round(approval_rate, 1)
+    }
+
+
+# ─── Phase 3: Analytics & Visualization ────────────────────────────────────────
+
+@router.get(
+    "/admin/fraud-rings",
+    response_model=list[dict],
+    summary="[Admin] Get detected fraud clusters (GNN output)",
+)
+def get_fraud_rings(db: Session = Depends(get_db)):
+    """Used for the 'GNN Ring Graph' visualization."""
+    rings = db.query(FraudRing).order_by(FraudRing.detected_at.desc()).limit(10).all()
+    # Convert to simple dict for the chart
+    return [{"id": str(r.cluster_id), "score": r.ring_score, "claims": json.loads(r.claim_ids)} for r in rings]
+
+
+@router.get(
+    "/admin/heatmap",
+    summary="[Admin] Get claim density by zone for Mapbox/Leaflet",
+)
+def get_claim_heatmap(db: Session = Depends(get_db)):
+    """Returns claims grouped by zone for the heatmap visual."""
+    from sqlalchemy import func
+    results = (
+        db.query(Worker.zone_pincode, func.count(Claim.id).label("intensity"))
+        .join(Claim, Worker.id == Claim.worker_id)
+        .group_by(Worker.zone_pincode)
+        .all()
+    )
+    return [{"zone": r[0], "intensity": r[1]} for r in results]
+
+
+@router.get(
+    "/admin/payouts",
+    response_model=list[PayoutResponse],
+    summary="[Admin] View recent transaction statuses",
+)
+def list_payouts(db: Session = Depends(get_db)):
+    return db.query(Payout).order_by(Payout.created_at.desc()).limit(50).all()

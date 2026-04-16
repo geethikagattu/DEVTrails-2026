@@ -4,10 +4,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ─── Environment ───────────────────────────────────────────────────────────────
-DATABASE_URL    = os.getenv("DATABASE_URL", "postgresql://postgres:jgscVhKoOFbdZqbNmEEwOSaWSjxRxmlk@maglev.proxy.rlwy.net:52400/railway")
+DATABASE_URL    = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/shieldrun")
+REDIS_URL       = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
 SECRET_KEY      = os.getenv("SECRET_KEY", "changeme-use-a-real-secret")
 ENVIRONMENT     = os.getenv("ENVIRONMENT", "development")
+
+# Payouts & Integrations
+RAZORPAY_KEY             = os.getenv("RAZORPAY_KEY", "rzp_test_mock")
+FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS", "")
+
 
 # ─── Parametric Trigger Thresholds ────────────────────────────────────────────
 # These define WHEN a claim fires automatically.
