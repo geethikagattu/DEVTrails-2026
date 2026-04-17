@@ -34,7 +34,6 @@ class WorkerResponse(BaseModel):
     platform:           PlatformEnum
     platform_id:        str
     zone_pincode:       str
-    zone:               Optional[str]
     city:               str
     upi_id:             Optional[str]
     firebase_uid:       Optional[str]
@@ -188,7 +187,7 @@ class SignalCreate(BaseModel):
 
 class TriggerResponse(BaseModel):
     id:        UUID
-    zone:      str
+    zone:      Optional[str] = None
     type:      str
     value:     float
     timestamp: datetime
