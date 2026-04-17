@@ -5,6 +5,17 @@
 
 ---
 
+## 🎯 Pitch & Demo Resources
+
+| Resource | Link |
+|---|---|
+| 📊 **Pitch Presentation** | [View Slides on Google Drive](https://drive.google.com/file/d/1un96MQevMDF8uszVBDMsupYdoDr7aqJP/view?usp=sharing) |
+| 🎬 **Demo Video (Phase 1)** | [Watch on Google Drive](https://drive.google.com/file/d/1llNzdJ-xETvSFLIZ_f2jC9FYSMWWeZvq/view?usp=sharing) |
+| 🌐 **Live Platform** | [sheildrun.vercel.app](https://sheildrun.vercel.app) |
+| ⚙️ **Backend API Docs** | [sheildrun-production.up.railway.app/docs](https://sheildrun-production.up.railway.app/docs) |
+
+---
+
 ##  The Problem
 
 India has **12+ million gig delivery workers**. A Swiggy or Zomato delivery partner in Bengaluru earns roughly ₹700–900/day. When a monsoon hits, an AQI spike grounds them, or a local strike shuts down zones — they lose income immediately, with zero safety net.
