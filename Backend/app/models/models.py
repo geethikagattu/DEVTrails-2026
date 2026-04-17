@@ -46,7 +46,6 @@ class Worker(Base):
     platform            = Column(Enum(PlatformEnum), nullable=False)
     platform_id         = Column(String(50), nullable=False)        # their Zomato/Swiggy ID
     zone_pincode        = Column(String(10), nullable=False)
-    zone                = Column(String(50), nullable=True)         # Used for logical grouping / ML inference
     city                = Column(String(50), nullable=False)
     upi_id              = Column(String(100), nullable=True)         # for payouts
     firebase_uid        = Column(String(128), unique=True, nullable=True, index=True) # Phase 3: Firebase Auth
