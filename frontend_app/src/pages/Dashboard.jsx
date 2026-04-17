@@ -31,34 +31,32 @@ export default function Dashboard() {
   // Demo Trigger Action: Clean Event
   const triggerDemoEvent = async () => {
     try {
-      await api.post(`/api/v1/claims/demo-trigger`, {
+      await api.post(`/api/v1/claims/demo/trigger`, {
         worker_id: workerId,
         trigger_type: 'heavy_rain',
         trigger_value: 40.0
       });
       fetchDashboard();
-      alert("⚠️ Demo Event: Heavy Rain detected. Check the admin panel for AI approval!");
+      alert("⚠️ Heavy Rain Detected! Claim submitted. Check admin panel for AI approval!");
     } catch(err) {
-      alert("Trigger failed");
+      const msg = err?.response?.data?.detail || err.message || 'Unknown error';
+      alert(`Trigger failed: ${msg}`);
     }
   };
 
   // Demo Trigger Action: Fraudulent Event (GPS Spoof)
   const triggerSpoofEvent = async () => {
     try {
-      // For the demo, we'll manually specify a spoof flag in a specialized endpoint
-      // or just simulate an anomaly in the signals table.
-      await api.post(`/api/v1/claims/demo-trigger`, {
+      await api.post(`/api/v1/claims/demo/trigger`, {
         worker_id: workerId,
         trigger_type: 'flood_alert',
         trigger_value: 45.0
       });
-      // In a real demo script, the backend 'demo_trigger' would be told to set mock_flag=True
-      // For this one, we'll just alert the user.
       fetchDashboard();
-      alert("🛑 Spoof Demo: GPS anomaly detected. Check Admin for 'Soft Flag' status.");
+      alert("🛑 GPS Spoof Detected! AI flagged this claim. Check Admin panel.");
     } catch(err) {
-      alert("Spoof trigger failed");
+      const msg = err?.response?.data?.detail || err.message || 'Unknown error';
+      alert(`Spoof trigger failed: ${msg}`);
     }
   };
 
