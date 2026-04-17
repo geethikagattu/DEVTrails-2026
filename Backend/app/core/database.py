@@ -44,6 +44,28 @@ def get_db():
     finally:
         db.close()
 
+def run_migrations():
+    """
+    Add any new columns that don't exist yet (safe, idempotent migrations).
+    Called on every startup — uses IF NOT EXISTS so it's always safe to re-run.
+    """
+    migrations = [
+        "ALTER TABLE workers ADD COLUMN IF NOT EXISTS zone VARCHAR(50)",
+        "ALTER TABLE workers ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(128)",
+        "ALTER TABLE workers ADD COLUMN IF NOT EXISTS zone_risk_score INTEGER DEFAULT 50",
+        "ALTER TABLE workers ADD COLUMN IF NOT EXISTS avg_daily_earnings FLOAT DEFAULT 500.0",
+        "ALTER TABLE workers ADD COLUMN IF NOT EXISTS upi_id VARCHAR(100)",
+    ]
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+            except Exception as e:
+                logger.warning(f"Migration skipped ({e})")
+    logger.info("✅ Schema migrations applied")
+
+
 def create_tables():
     """
     Creates all tables in the database if they don't exist.
@@ -51,6 +73,7 @@ def create_tables():
     """
     from app.models import models  # noqa: import triggers table registration
     Base.metadata.create_all(bind=engine)
+    run_migrations()
     logger.info("✅ Database tables created/verified")
 
 
